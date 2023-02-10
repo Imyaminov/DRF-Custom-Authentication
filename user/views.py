@@ -86,7 +86,6 @@ class GetNewVerification(APIView):
             }
         )
 
-
     @staticmethod
     def check_verification(user):
         verifies = user.verify_codes.filter(expiration_time__gte=datetime.now(), is_confirmed=False)
