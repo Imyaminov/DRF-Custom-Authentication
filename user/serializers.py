@@ -48,7 +48,6 @@ class SignUpSerializer(serializers.ModelSerializer):
     @staticmethod
     def auth_validate(attrs):
         user_input = str(attrs.get('email_phone_number')).lower()
-        print(attrs)
         input_type = check_email_or_phone(user_input)
         if input_type == 'email':
             data = {

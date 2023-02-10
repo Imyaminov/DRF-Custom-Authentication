@@ -107,10 +107,10 @@ class CustomUser(AbstractUser, BaseModel):
 
     def check_username(self):
         if not self.username:
-            temp = f'DemoProject-{uuid.uuid4().__str__().split("-")[-1]}'
-            while CustomUser.objects.filter(username=temp):
-                temp = f'{temp}{random.randint(0,9)}'
-            self.username = temp
+            temp_username = f'DemoProject-{uuid.uuid4().__str__().split("-")[-1]}'
+            while CustomUser.objects.filter(username=temp_username):
+                temp = f'{temp_username}{random.randint(0,9)}'
+            self.username = temp_username
 
     def check_email(self):
         if self.email:
@@ -119,8 +119,8 @@ class CustomUser(AbstractUser, BaseModel):
 
     def check_pass(self):
         if not self.password:
-            temp = f'password-{uuid.uuid4().__str__().split("-")[-1]}'
-            self.password = temp
+            temp_password = f'password-{uuid.uuid4().__str__().split("-")[-1]}'
+            self.password = temp_password
 
     def hashing_password(self):
         if not self.password.startswith('pbkdf2_sha256'):
