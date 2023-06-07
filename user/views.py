@@ -15,8 +15,8 @@ from .models import (
     VIA_PHONE
 )
 from .serializers import (
-    SignUpSerializer,
-    ChangeUserInformation
+    ChangeUserInformationSerializer,
+    SignUpSerializer
 )
 
 
@@ -57,7 +57,7 @@ class VerifyApiView(APIView):
             }
             raise ValidationError(data)
         user_confirm_obj.update(is_confirmed=True)
-        if user.auth_status not in (INFORMATION_FILLED, DONE):
+        if user.auth_status not in DONE:
             user.auth_status = CODE_VERIFIED
             user.save()
         return True
@@ -95,18 +95,24 @@ class GetNewVerification(APIView):
             }
             raise ValidationError(data)
 
+
 class ChangeUserView(generics.UpdateAPIView):
     permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = ChangeUserInformation
+    serializer_class = ChangeUserInformationSerializer
     http_method_names = ['patch', 'put']
+
+    def get_object(self):
+        return self.request.user
 
     def partial_update(self, request, *args, **kwargs):
         super(ChangeUserView, self).partial_update(request, *args, **kwargs)
         return Response(
             data={
                 'detail': 'Updated successfully',
-                'auth_status': self.request.user.auth_status
-            }
+                'auth_status': self.request.user.auth_status,
+                'username': self.request.user.username
+            },
+            status=200
         )
 
 
