@@ -1,10 +1,14 @@
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import CreateAPIView, GenericAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import permissions
+from rest_framework import permissions, status
 from rest_framework import generics
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from shared.utils import send_email
 from .models import (
     CustomUser,
@@ -16,7 +20,8 @@ from .models import (
 )
 from .serializers import (
     ChangeUserInformationSerializer,
-    SignUpSerializer
+    SignUpSerializer,
+    MyTokenObtainPairSerializer, CustomTokenRefreshSerializer, LogoutSerializer
 )
 
 
@@ -27,6 +32,7 @@ class CreateUserAPIView(CreateAPIView):
 
     def get_queryset(self):
         return self.get_queryset()
+
 
 class VerifyApiView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -41,7 +47,7 @@ class VerifyApiView(APIView):
                 'access': user.token()['access'],
                 'refresh': user.token()['refresh']
             },
-            status=200
+            status=status.HTTP_200_OK
         )
 
     @staticmethod
@@ -61,6 +67,7 @@ class VerifyApiView(APIView):
             user.auth_status = CODE_VERIFIED
             user.save()
         return True
+
 
 class GetNewVerification(APIView):
     permission_classes = (permissions.IsAuthenticated, )
@@ -112,8 +119,39 @@ class ChangeUserView(generics.UpdateAPIView):
                 'auth_status': self.request.user.auth_status,
                 'username': self.request.user.username
             },
-            status=200
+            status=status.HTTP_200_OK
         )
+
+
+class LoginView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    serializer_class = CustomTokenRefreshSerializer
+
+
+class LogoutView(GenericAPIView):
+    serializer_class = LogoutSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        serializer_class = self.serializer_class(data=self.request.data)
+        serializer_class.is_valid(raise_exception=True)
+        try:
+            refresh_token = RefreshToken(self.request.data['refresh'])
+            refresh_token.blacklist()
+            data = {
+                'success': True,
+                'message': 'You are logged out'
+            }
+            return Response(data=data, status=status.HTTP_205_RESET_CONTENT)
+        except TokenError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
 
 
 
